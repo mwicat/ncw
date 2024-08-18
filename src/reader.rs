@@ -101,7 +101,7 @@ impl<R: Read + Seek> NcwReader<R> {
             (total_samples % MAX_SAMPLES_PER_BLOCK) / self.header.channels as usize;
 
         for i in 0..self.block_offsets.len() {
-            let is_final_block: bool = i == self.block_offsets.len() - 1;
+            let is_final_block: bool = false; //i == self.block_offsets.len() - 1;
 
             // Seek to current block
             self.reader.seek(SeekFrom::Start(
@@ -209,7 +209,11 @@ fn decode_truncated_block_i32(data: &[u8], bit_size: usize) -> Vec<i32> {
         for i in 0..((bit_size + 7) / 8) {
             temp |= (data[byte_offset + i] as i32) << (i * 8);
         }
-        let value = (temp >> bit_remainder) & ((1 << bit_size) - 1);
+        let mut value = (temp >> bit_remainder) & ((1 << bit_size) - 1);
+
+        if value & (1 << (bit_size - 1)) != 0 {
+            value |= !0 << bit_size;
+        }
         samples.push(value);
 
         bit_offset += bit_size;
